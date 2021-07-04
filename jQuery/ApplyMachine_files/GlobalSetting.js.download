@@ -1,0 +1,33 @@
+﻿
+
+var ApiDomain = "https://api.agrimachinerypb.com";
+var WebDomain = 'https://agrimachinerypb.com';
+var Header = {
+    headers: {
+        "Authorization-Type": "Token",
+        //"Auth-Token": $("#hdnAuthToken").val()
+    }
+};
+
+function GlobalErrorHandler(status) {
+    debugger;
+    if (status == 401) {
+        alert("Your session has been expired. Please login again");
+        window.location = WebDomain + "/Account/LogOut";
+    }
+    else if (status == 400) {
+        //alert("Token not found. Please login again");
+        //window.location = WebDomain + "/Account/LogOut";
+    }
+    else
+    {
+      //  window.location = WebDomain + "/Account/Error";
+    }
+
+};
+
+
+function GlobalSuccessHandler(status) {
+
+  
+};

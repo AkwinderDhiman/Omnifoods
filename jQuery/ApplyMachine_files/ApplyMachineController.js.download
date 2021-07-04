@@ -1,0 +1,312 @@
+﻿mod.controller("aarthiController", function ($q, $http, toaster, $window, $scope, $timeout, $compile, $rootScope, $filter, $location, ApplyMachineFactory) {
+    debugger;
+    $('#loader').hide();
+    var beneficiary_id = $("#hdnUserIdentityKey").prop('value');
+    const urlParams = new URLSearchParams(window.location.search);
+    const myParam = urlParams.get('scheme_type');
+    $scope.FarmerId = beneficiary_id;
+    $scope.IsProfileCompleted = true;
+    $scope.MachineCategoriesList = [];
+    $scope.MachineCategories = [];
+    $scope.application_list = [];
+    $scope.scheme_type = 0;
+    $scope.GrandTotal = 0;
+    $scope.GrandQuantity = 0;
+    $scope.MachineCategoriesFinal = [];
+    $scope.max_no_of_applied_machines = 0;
+    ApplyMachineFactory.getMaxNoOfMachineEligible(beneficiary_id).success(function (dataSave) {
+        if (dataSave.success) {
+            $scope.max_no_of_applied_machines = dataSave.responseData;
+        }
+        else {
+            $scope.max_no_of_applied_machines = dataSave.responseData;
+        }
+    })
+    ApplyMachineFactory.CheckLastSessionDetail(beneficiary_id).success(function (dataSave) {
+        if (dataSave.success) {
+
+        }
+        else {
+            $("#myModal").modal('show');
+        }
+    })
+
+    $scope.GetMachines = function (scheme_type_id) {
+        $('#loader').show();
+        $scope.MachineCategoriesList = [];
+        $scope.MachineCategories = [];
+        ApplyMachineFactory.GetMachineCategories(beneficiary_id, scheme_type_id).success(function (dataSave) {
+            if (dataSave.success) {
+                debugger;
+                $scope.MachineCategories = dataSave.responseData.filter(x => x.no_of_machines_permissible>0);
+                $scope.GrandTotal = $scope.MachineCategories.sum('total_approx_price');
+                $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+                $('#loader').hide();
+            }
+            else {
+                $scope.MachineCategoriesList = [];
+            }
+
+        });
+    }
+    if (myParam == "1") {
+        $("#crmclick").trigger('click');
+        $scope.GetMachines(1);
+    }
+    else if (myParam == "2") {
+        $("#crmclick1").trigger('click');
+        $scope.GetMachines(2);
+    }
+    
+    //ApplyMachineFactory.IsProfileCompleted(beneficiary_id).success(function (dataSave) {
+    //    if (dataSave.success) {
+    //        $scope.IsProfileCompleted = true;
+    //    }
+    //    else {
+    //        $scope.IsProfileCompleted = false;
+    //    }
+
+    //});
+    ApplyMachineFactory.GetBeneficiaryMachineData(beneficiary_id).success(function (dataSave) {
+        if (dataSave.success) {
+            $scope.application_list = dataSave.responseData;
+        }
+        else {
+            $scope.application_list = [];
+        }
+
+    });
+    $scope.activateRow = function (machinery_id) {
+        var row_data = $scope.MachineCategories.find(x => x.machinery_id == machinery_id);
+        if (row_data.is_checkbox_checked) {
+            row_data.is_ddl_disable = false;
+            row_data.no_of_applied_machines = 1;
+            //var row_data = $scope.MachineCategories.find(x => x.machinery_id == machinery_id);
+            var group_data = $scope.MachineCategories.filter(x => x.machinery_group_id == row_data.machinery_group_id);
+            if (group_data.sum('no_of_applied_machines') > row_data.no_of_machines_permissible) {
+                row_data.no_of_applied_machines = 0;
+                row_data.is_checkbox_checked = false;
+                row_data.is_ddl_disable = true;
+                $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+                alert("You can add only " + row_data.no_of_machines_permissible + " machine to " + row_data.machinery_group_name+" group.");
+                return false;
+            }
+            $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+            if ($scope.GrandQuantity > $scope.max_no_of_applied_machines) {
+                row_data.no_of_applied_machines = 0;
+                row_data.is_checkbox_checked = false;
+                row_data.is_ddl_disable = true;
+                $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+                alert("You cannot apply more than " + $scope.max_no_of_applied_machines + " machines");
+                return false;
+            }
+            row_data.total_approx_price = row_data.no_of_applied_machines * row_data.unit_price;
+            $scope.GrandTotal = $scope.MachineCategories.sum('total_approx_price');
+            $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+
+        }
+        else {
+            row_data.no_of_applied_machines = 0;
+            row_data.total_approx_price = row_data.no_of_applied_machines * row_data.unit_price;
+            $scope.GrandTotal = $scope.MachineCategories.sum('total_approx_price');
+            $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+            row_data.is_ddl_disable = true;
+        }
+
+    }
+    Array.prototype.sum = function (prop) {
+        var total = 0
+        for (var i = 0, _len = this.length; i < _len; i++) {
+            total += this[i][prop]
+        }
+        return total
+    }
+    $scope.calculateTotalInvestment = function (machinery_id) {
+        debugger;
+        var row_data = $scope.MachineCategories.find(x => x.machinery_id == machinery_id);
+        //var group_data = $scope.MachineCategories.filter(x => x.machinery_group_id == row_data.machinery_group_id);
+        //if (group_data.sum('no_of_applied_machines') > row_data.no_of_machines_permissible) {
+        //    row_data.no_of_applied_machines = 0;
+        //    row_data.is_checkbox_checked = false;
+        //    row_data.is_ddl_disable = true;
+        //    $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+        //    alert("Number of applied machine for the group must be less than or equal to Number of permissible machine for that group");
+        //    return false;
+        //}
+        $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+        if ($scope.GrandQuantity > $scope.max_no_of_applied_machines) {
+            row_data.no_of_applied_machines = 0;
+            row_data.is_checkbox_checked = false;
+            row_data.is_ddl_disable = true;
+            $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+            alert("You cannot apply more than " + $scope.max_no_of_applied_machines + " machines");
+            return false;
+        }
+        $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+        if ($scope.GrandQuantity > $scope.max_no_of_applied_machines) {
+            row_data.no_of_applied_machines = 0;
+            $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+            alert("You can add only " + row_data.no_of_machines_permissible + " machine to " + row_data.machinery_group_name + " group.");
+            return false;
+        }
+        row_data.total_approx_price = row_data.no_of_applied_machines * row_data.unit_price;
+        $scope.GrandTotal = $scope.MachineCategories.sum('total_approx_price');
+        $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+    }
+   
+
+    $scope.BeneficiaryMachineManagment = {
+
+
+        saveSaleDetails: function () {
+
+            if ($scope.GrandQuantity > 0) {
+                var data = $scope.MachineCategoriesFinal.filter(x => x.priority == 0)
+                if (data.length > 0) {
+                    alert("ਕਿਸੇ ਵੀ ਮਸ਼ੀਨ ਲਈ ਤਰਜੀਹ ਜ਼ੀਰੋ ਨਹੀਂ ਹੋ ਸਕਦੀ");
+                    return false;
+                }
+                var max_priority = $scope.MachineCategoriesFinal.length;
+                var sum_prioriry = $scope.MachineCategoriesFinal.sum('priority');
+                var reqiuired_sum_priority = 0;
+                for (i = 1; i <= max_priority; i++) {
+                    reqiuired_sum_priority = reqiuired_sum_priority + i;
+                }
+                if (sum_prioriry != reqiuired_sum_priority) {
+                    alert("ਆਵੇਦਨ ਕੀਤੀਆਂ ਮਸ਼ੀਨਾਂ ਲਈ ਤਰਜੀਹ ਇਕੋ ਜਿਹੀ ਨਹੀਂ ਹੋ ਸਕਦੀ");
+                    return false;
+                }
+                $('#loader').show();
+                ApplyMachineFactory.SaveMachineData($scope.MachineCategories).success(function (dataSave) {
+                    if (dataSave.success) {
+                        $('#loader').hide();
+                        alert("ਤੁਹਾਡੀ ਮਸ਼ੀਨਾਂ ਦਾ ਆਵੇਦਨ ਹੋ ਗਿਆ ਹੈ, ਧੰਨਵਾਦ !");
+                        window.location.href = "/MMS/ApplicationDetails";
+                    }
+
+                }).error(function (error) {
+                    $('#loader').hide();
+                    alert("ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ!");
+                });
+            }
+            else {
+                alert("ਕਿਰਪਾ ਕਰਕੇ ਘੱਟੋ ਘੱਟ ਇੱਕ ਮਸ਼ੀਨ ਦੀ ਚੋਣ ਕਰੋ.")
+            }
+        }
+
+
+    }
+    $scope.getSelectedMachines = function () {
+        //var row_data = $scope.MachineCategories.find(x => x.machinery_id == machinery_id);
+        //var group_data = $scope.MachineCategories.filter(x => x.machinery_group_id == row_data.machinery_group_id);
+        //if (group_data.sum('no_of_applied_machines') > row_data.no_of_machines_permissible) {
+        //    row_data.no_of_applied_machines = 0;
+        //    row_data.is_checkbox_checked = false;
+        //    row_data.is_ddl_disable = true;
+        //    $scope.GrandQuantity = $scope.MachineCategories.sum('no_of_applied_machines');
+        //    alert("Number of applied machine for the group must be less than or equal to Number of permissible machine for that group");
+        //    return false;
+        //}
+        
+        $scope.MachineCategoriesFinal = $scope.MachineCategories.filter(x => x.is_checkbox_checked == true && x.no_of_applied_machines != 0);
+            for (i = 0; i < $scope.MachineCategoriesFinal.length; i++) {
+                var data = [];
+                for (j = 1; j <= $scope.MachineCategoriesFinal.length; j++) {
+                    data.push(j);
+                }
+                if ($scope.MachineCategoriesFinal[i].application_id == 0) {
+                    $scope.MachineCategoriesFinal[i].priority = i + 1;
+                }
+                else {
+                    if ($scope.MachineCategoriesFinal[i].priority == 0) {
+                        $scope.MachineCategoriesFinal[i].priority = i + 1;
+                    }
+                    else {
+
+                    }
+                }
+               
+                $scope.MachineCategoriesFinal[i].priority_list = data;
+            }
+        
+        $("#preview_table").modal("show");
+    }
+    $scope.ValidatePriorityArray = function (machine_id) {
+        //var data = $scope.MachineCategoriesFinal.find(x => x.machinery_id == machine_id);
+        //if (data.priority == 0) {
+
+        //}
+        //else {
+        //    currentDropDownValue = data.priority;
+        //    var findSameVaue = $scope.MachineCategoriesFinal.filter(x => x.priority == currentDropDownValue);
+        //    if (findSameVaue.length > 1) {
+
+        //        alert("Priority value can't be same for machines.");
+        //        data.priority = 0;
+        //    }
+        //}
+        
+    }
+
+    $scope.deleteMachine = function (id) {
+        var checkstr = confirm('Are you sure you want to delete this machine from applied machine list?');
+        if (checkstr == true) {
+            $('#loader').show();
+            ApplyMachineFactory.deleteMachine(id).success(function (dataSave) {
+                if (dataSave.success) {
+                    $('#loader').hide();
+                    alert("ਮਸ਼ੀਨ ਸਫਲਤਾਪੂਰਵਕ ਹਟਾਈ ਗਈ");
+                    $window.location.reload();
+                }
+                else {
+                    alert("ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ!");
+                    $('#loader').hide();
+                }
+
+            }).error(function (error) {
+
+            });
+        } else {
+            return false;
+        }
+    }
+    $scope.deleteApplication = function (id) {
+        var checkstr = confirm('All Machines added in the application will also deleted.Are you sure you want to delete this Application?');
+        if (checkstr == true) {
+            $('#loader').show();
+            ApplyMachineFactory.deleteApplication(id).success(function (dataSave) {
+                if (dataSave.success) {
+                    $('#loader').hide();
+                    alert("ਐਪਲੀਕੇਸ਼ਨ ਸਫਲਤਾਪੂਰਵਕ ਮਿਟਾਈ ਗਈ");
+                    $window.location.reload();
+                }
+                else {
+                    alert("ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ!");
+                    $('#loader').hide();
+                }
+
+            }).error(function (error) {
+
+            });
+        } else {
+            return false;
+        }
+    }
+    $scope.saveEntryWithNoMachineData = function () {
+        var checkstr = confirm('Once you click OK. then you are not able to add previous session data.Are you sure to continue?');
+        if (checkstr == true) {
+            ApplyMachineFactory.saveEntryWithNoMachineData(beneficiary_id).success(function (dataSave) {
+                if (dataSave.success) {
+                    $("#myModal").modal('hide');
+                }
+                else {
+
+                }
+            })
+        }
+        else {
+            return false;
+        }
+    }
+});
+

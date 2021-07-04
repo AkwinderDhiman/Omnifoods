@@ -1,0 +1,96 @@
+﻿mod.factory("ApplyMachineFactory", function ($http) {
+    var BeneficiaryMachineApiUrl = ApiDomain + "/api/BeneficiaryMachine";
+
+    var api = {
+        CheckLastSessionDetail: function (benficiary_id) {
+            return $http.get(BeneficiaryMachineApiUrl + "/CheckLastSessionDetail/" + benficiary_id, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+        getMaxNoOfMachineEligible: function (benficiary_id) {
+            return $http.get(BeneficiaryMachineApiUrl + "/getMaxNoOfMachineEligible/" + benficiary_id, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+        saveEntryWithNoMachineData: function (benficiary_id) {
+            return $http.get(BeneficiaryMachineApiUrl + "/saveEntryWithNoMachineData/" + benficiary_id, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+        GetMachineCategories: function (beneficiary_id, machine_scheme_type_id) {
+            return $http.get(BeneficiaryMachineApiUrl + "/GetMachineCategories/" + beneficiary_id + "/" + machine_scheme_type_id, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+        GetBeneficiaryMachineData: function (beneficiary_id) {
+            return $http.get(BeneficiaryMachineApiUrl + "/GetBeneficiaryMachineData/" + beneficiary_id, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+        SaveMachineData: function (model) {
+            return $http.post(BeneficiaryMachineApiUrl + "/SaveMachineData", model, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+        deleteMachine: function (id) {
+            return $http.get(BeneficiaryMachineApiUrl + "/deleteMachine/" + id, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+        deleteApplication: function (id) {
+            return $http.get(BeneficiaryMachineApiUrl + "/deleteApplication/" + id, Header).success(function (data) {
+
+                GlobalSuccessHandler(data);
+
+            }).error(function (err, status) {
+
+                GlobalErrorHandler(status);
+
+            });
+        },
+    };
+    return api;
+
+});
